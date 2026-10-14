@@ -21,7 +21,11 @@ export function visitorId(ip: string, userAgent: string, month = new Date().toIS
 }
 export function ipPrefix(ip: string) { if (ip.includes(":")) return ip.split(":").slice(0, 4).join(":") + "::"; return ip.split(".").slice(0, 3).join(".") + ".0"; }
 export function getClientIP(request: NextRequest) {
-  const raw = request.headers.get("x-forwarded-for")?.split(",")[0]?.trim() || request.headers.get("x-real-ip") || "";
+  const raw = request.headers.get("x-real-ip") || request.headers.get("x-forwarded-for")?.split(",")[0]?.trim() || "";
+  return raw.replace(/^\[|\]$/g, "").slice(0, 64);
+}
+export function getIPFromHeaders(headers: Headers) {
+  const raw = headers.get("x-real-ip") || headers.get("x-forwarded-for")?.split(",")[0]?.trim() || "";
   return raw.replace(/^\[|\]$/g, "").slice(0, 64);
 }
 export function sameOrigin(request: NextRequest) {

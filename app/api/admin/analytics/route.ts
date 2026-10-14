@@ -13,7 +13,7 @@ export async function GET(request: NextRequest) {
   for (const field of ["country", "region", "device"] as const) { const value = params.get(field)?.trim(); if (value) filter[field] = { $regex: `^${value.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")}$`, $options: "i" }; }
   const from = params.get("from"), to = params.get("to");
   if (from || to) filter.visitedAt = { ...(from ? { $gte: new Date(`${from}T00:00:00Z`) } : {}), ...(to ? { $lte: new Date(`${to}T23:59:59.999Z`) } : {}) };
-  const events = await AnalyticsEvent.find(filter).sort({ visitedAt: -1 }).limit(500).select("visitedAt country region city isp asn device os browser").lean();
+  const events = await AnalyticsEvent.find(filter).sort({ visitedAt: -1 }).limit(500).select("visitedAt ipAddress country region city isp asn device os browser").lean();
   const since7 = dateDaysAgo(7), since30 = dateDaysAgo(30), today = new Date(); today.setUTCHours(0,0,0,0);
   const [total, unique, todayCount, seven, thirty, daily] = await Promise.all([
     AnalyticsEvent.countDocuments({}), AnalyticsEvent.distinct("visitorId", { visitedAt: { $gte: since30 } }).then(x=>x.length), AnalyticsEvent.countDocuments({ visitedAt: { $gte: today } }), AnalyticsEvent.countDocuments({ visitedAt: { $gte: since7 } }), AnalyticsEvent.countDocuments({ visitedAt: { $gte: since30 } }), DailyStat.find({ date: { $gte: since30.toISOString().slice(0,10) } }).sort({ date: 1 }).lean(),

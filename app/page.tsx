@@ -1,12 +1,14 @@
 import { headers } from "next/headers";
 import ConnectionPage from "@/components/ConnectionPage";
 import { UAParser } from "ua-parser-js";
+import { connectDB } from "@/lib/db";
+import { AnalyticsEvent, DailyStat } from "@/lib/models";
+import { getIPFromHeaders, ipPrefix, visitorId } from "@/lib/security";
 
 export const dynamic = "force-dynamic";
 export default async function Home() {
   const h = await headers();
-  const forwarded = h.get("x-forwarded-for")?.split(",")[0]?.trim() || "";
-  const ip = forwarded.replace(/^\[|\]$/g, "");
+  const ip = getIPFromHeaders(h);
   const ua = h.get("user-agent") || "";
   const parser = new UAParser(ua);
   const parsed = parser.getResult();
@@ -29,5 +31,16 @@ export default async function Home() {
     os: [parsed.os.name, parsed.os.version].filter(Boolean).join(" ") || "Unknown",
     browser: [parsed.browser.name, parsed.browser.version].filter(Boolean).join(" ") || "Unknown",
   };
-  return <ConnectionPage info={info} />;
+  let visitRecorded = false;
+  if (ip) {
+    try {
+      const visitedAt = new Date();
+      const device = info.device;
+      await connectDB();
+      await AnalyticsEvent.create({ visitedAt, country: info.country, region: info.region, city: info.city, isp: info.isp, asn: info.asn, device, os: info.os, browser: info.browser, ipAddress: ip, ipPrefix: ipPrefix(ip), visitorId: visitorId(ip, ua) });
+      await DailyStat.updateOne({ date: visitedAt.toISOString().slice(0, 10) }, { $inc: { visits: 1, ...(device === "Mobile" ? { mobile: 1 } : device === "Desktop" ? { desktop: 1 } : device === "Tablet" ? { tablet: 1 } : {}) }, $set: { updatedAt: new Date() } }, { upsert: true });
+      visitRecorded = true;
+    } catch (error) { console.error("Automatic visit recording failed", error); }
+  }
+  return <ConnectionPage info={info} visitRecorded={visitRecorded} />;
 }

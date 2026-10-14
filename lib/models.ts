@@ -4,7 +4,7 @@ const adminSchema = new Schema({ email: { type: String, required: true, unique: 
 const eventSchema = new Schema({
   visitedAt: { type: Date, required: true, default: Date.now },
   country: { type: String, default: "Unknown", index: true }, region: { type: String, default: "Unknown", index: true }, city: { type: String, default: "Unknown" }, isp: { type: String, default: "Unknown" }, asn: { type: String, default: "Unknown" },
-  device: { type: String, enum: ["Mobile", "Desktop", "Tablet", "Unknown"], default: "Unknown", index: true }, os: { type: String, default: "Unknown" }, browser: { type: String, default: "Unknown" }, ipPrefix: { type: String, default: "" }, visitorId: { type: String, required: true, index: true },
+  device: { type: String, enum: ["Mobile", "Desktop", "Tablet", "Unknown"], default: "Unknown", index: true }, os: { type: String, default: "Unknown" }, browser: { type: String, default: "Unknown" }, ipAddress: { type: String, default: "" }, ipPrefix: { type: String, default: "" }, visitorId: { type: String, required: true, index: true },
 }, { versionKey: false });
 eventSchema.index({ visitedAt: 1 }, { expireAfterSeconds: 60 * 60 * 24 * 30 });
 eventSchema.index({ country: 1, region: 1, device: 1, visitedAt: -1 });
