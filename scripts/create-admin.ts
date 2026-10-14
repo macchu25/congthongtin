@@ -1,7 +1,9 @@
-import "dotenv/config";
+import dotenv from "dotenv";
 import bcrypt from "bcryptjs";
 import { connectDB } from "../lib/db";
 import { Admin } from "../lib/models";
+
+dotenv.config({ path: ".env.local" });
 
 async function main() {
   const email = process.env.ADMIN_EMAIL?.trim().toLowerCase();
